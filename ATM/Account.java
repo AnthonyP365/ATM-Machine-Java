@@ -1,16 +1,25 @@
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.PrintWriter;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
-public class Account {
+public class Account extends ATM {
 	// variables
 	private int customerNumber;
 	private int pinNumber;
 	private double checkingBalance = 0;
 	private double savingBalance = 0;
+	private ArrayList<String> transactionHistory;
 
 	Scanner input = new Scanner(System.in);
 	DecimalFormat moneyFormat = new DecimalFormat("'$'###,##0.00");
+
+
+/// CONSTRUCTORS ///
 
 	public Account() {
 	}
@@ -25,7 +34,10 @@ public class Account {
 		this.pinNumber = pinNumber;
 		this.checkingBalance = checkingBalance;
 		this.savingBalance = savingBalance;
+		this.transactionHistory = new ArrayList<>();
 	}
+
+/// GETTERS AND SETTERS ///
 
 	public int setCustomerNumber(int customerNumber) {
 		this.customerNumber = customerNumber;
@@ -51,6 +63,16 @@ public class Account {
 
 	public double getSavingBalance() {
 		return savingBalance;
+	}
+
+	public ArrayList<String> getTransactionHistory() {
+		return transactionHistory;
+	}
+
+/// METHODS ///
+
+	public void addTransactionToHistory(String transaction) {
+		transactionHistory.add(transaction);
 	}
 
 	public double calcCheckingWithdraw(double amount) {
@@ -93,6 +115,7 @@ public class Account {
 				if ((checkingBalance - amount) >= 0 && amount >= 0) {
 					calcCheckingWithdraw(amount);
 					System.out.println("\nCurrent Checking Account Balance: " + moneyFormat.format(checkingBalance));
+					logTransaction("Withdrew $" + amount + " from Checking account for customer number: " + customerNumber);
 					end = true;
 				} else {
 					System.out.println("\nBalance Cannot be Negative.");
@@ -114,6 +137,7 @@ public class Account {
 				if ((savingBalance - amount) >= 0 && amount >= 0) {
 					calcSavingWithdraw(amount);
 					System.out.println("\nCurrent Savings Account Balance: " + moneyFormat.format(savingBalance));
+					logTransaction("Withdrew $" + amount + " from Savings account for customer number: " + customerNumber);
 					end = true;
 				} else {
 					System.out.println("\nBalance Cannot Be Negative.");
@@ -135,6 +159,7 @@ public class Account {
 				if ((checkingBalance + amount) >= 0 && amount >= 0) {
 					calcCheckingDeposit(amount);
 					System.out.println("\nCurrent Checking Account Balance: " + moneyFormat.format(checkingBalance));
+					logTransaction("Deposited $" + amount + " into Checking account for customer number: " + customerNumber);
 					end = true;
 				} else {
 					System.out.println("\nBalance Cannot Be Negative.");
@@ -157,6 +182,7 @@ public class Account {
 				if ((savingBalance + amount) >= 0 && amount >= 0) {
 					calcSavingDeposit(amount);
 					System.out.println("\nCurrent Savings Account Balance: " + moneyFormat.format(savingBalance));
+					logTransaction("Deposited $" + amount + " into Savings account for customer number: " + customerNumber);
 					end = true;
 				} else {
 					System.out.println("\nBalance Cannot Be Negative.");
@@ -188,6 +214,7 @@ public class Account {
 							System.out.println("\nCurrent Savings Account Balance: " + moneyFormat.format(savingBalance));
 							System.out.println(
 									"\nCurrent Checking Account Balance: " + moneyFormat.format(checkingBalance));
+							logTransaction("Transferred $" + amount + " from Checking account into Savings account for customer number: " + customerNumber);
 							end = true;
 						} else {
 							System.out.println("\nBalance Cannot Be Negative.");
@@ -214,6 +241,7 @@ public class Account {
 							calcSavingTransfer(amount);
 							System.out.println("\nCurrent checking account balance: " + moneyFormat.format(checkingBalance));
 							System.out.println("\nCurrent savings account balance: " + moneyFormat.format(savingBalance));
+							logTransaction("Transferred $" + amount + " from Savings account into Checking account for customer number: " + customerNumber);
 							end = true;
 						} else {
 							System.out.println("\nBalance Cannot Be Negative.");

@@ -1,4 +1,7 @@
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.InputMismatchException;
@@ -6,12 +9,14 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Scanner;
 
-public class OptionMenu {
+public class OptionMenu extends ATM {
 	Scanner menuInput = new Scanner(System.in);
 	DecimalFormat moneyFormat = new DecimalFormat("'$'###,##0.00");
-	HashMap<Integer, Account> data = new HashMap<Integer, Account>();
+	//HashMap<Integer, Account> data = new HashMap<Integer, Account>();
 
-	public void getLogin() throws IOException {
+/// METHODS ///
+
+    public void getLogin() throws IOException {
 		boolean end = false;
 		int customerNumber = 0;
 		int pinNumber = 0;
@@ -33,6 +38,7 @@ public class OptionMenu {
 				}
 				if (!end) {
 					System.out.println("\nWrong Customer Number or Pin Number");
+					mainMenu();
 				}
 			} catch (InputMismatchException e) {
 				System.out.println("\nInvalid Character(s). Only Numbers.");
@@ -47,7 +53,8 @@ public class OptionMenu {
 				System.out.println("\nSelect the account you want to access: ");
 				System.out.println(" Type 1 - Checking Account");
 				System.out.println(" Type 2 - Savings Account");
-				System.out.println(" Type 3 - Exit");
+				System.out.println(" Type 3 - View Account Balances");
+				System.out.println(" Type 4 - Exit");
 				System.out.print("\nChoice: ");
 
 				int selection = menuInput.nextInt();
@@ -60,6 +67,9 @@ public class OptionMenu {
 					getSaving(acc);
 					break;
 				case 3:
+					getAccountBalances(acc);
+					break;
+				case 4:
 					end = true;
 					break;
 				default:
@@ -96,7 +106,6 @@ public class OptionMenu {
 				case 3:
 					acc.getCheckingDepositInput();
 					break;
-
 				case 4:
 					acc.getTransferInput("Checking");
 					break;
@@ -151,6 +160,17 @@ public class OptionMenu {
 		}
 	}
 
+	public void getAccountBalances(Account acc) {
+		boolean end = false;
+		while (!end) {
+			System.out.println("\nChecking Account Balance: " + moneyFormat.format(acc.getCheckingBalance()));
+			System.out.println("\nSavings Account Balance: " + moneyFormat.format(acc.getSavingBalance()));
+			System.out.println("\nPress any key to exit");
+			menuInput.next();
+			end = true;
+		}
+	}
+
 	public void createAccount() throws IOException {
 		int cst_no = 0;
 		boolean end = false;
@@ -158,20 +178,26 @@ public class OptionMenu {
 			try {
 				System.out.println("\nEnter your customer number ");
 				cst_no = menuInput.nextInt();
-				Iterator it = data.entrySet().iterator();
-				while (it.hasNext()) {
-					Map.Entry pair = (Map.Entry) it.next();
-					if (!data.containsKey(cst_no)) {
-						end = true;
+
+				if (data.isEmpty()) {
+					end = true;
+				} else {
+					Iterator it = data.entrySet().iterator();
+					while (it.hasNext()) {
+						Map.Entry pair = (Map.Entry) it.next();
+						if (!data.containsKey(cst_no)) {
+							end = true;
+						}
+					}
+					if (!end) {
+						System.out.println("\nThis customer number is already registered");
+						mainMenu();
 					}
 				}
-				if (!end) {
-					System.out.println("\nThis customer number is already registered");
+				} catch(InputMismatchException e){
+					System.out.println("\nInvalid Choice.");
+					menuInput.next();
 				}
-			} catch (InputMismatchException e) {
-				System.out.println("\nInvalid Choice.");
-				menuInput.next();
-			}
 		}
 		System.out.println("\nEnter PIN to be registered");
 		int pin = menuInput.nextInt();
@@ -182,8 +208,13 @@ public class OptionMenu {
 	}
 
 	public void mainMenu() throws IOException {
-		data.put(952141, new Account(952141, 191904, 1000, 5000));
-		data.put(123, new Account(123, 123, 20000, 50000));
+		File file = new File(dataFile);
+		if (file.exists() && file.length() > 0) {
+			loadAccounts();
+		}
+		//data.put(952141, new Account(952141, 191904, 1000, 5000));
+		//data.put(123, new Account(123, 123, 20000, 50000));
+
 		boolean end = false;
 		while (!end) {
 			try {
@@ -210,6 +241,7 @@ public class OptionMenu {
 		}
 		System.out.println("\nThank You for using this ATM.\n");
 		menuInput.close();
+		saveAccounts();
 		System.exit(0);
 	}
 }
