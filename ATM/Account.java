@@ -1,23 +1,23 @@
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.InputMismatchException;
-import java.util.Scanner;
+import java.util.*;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
-public class Account extends ATM {
-	// variables
+public class Account {
+	public static final String dataFile = "/Users/anthony/Documents/Projects/ATM-Machine-Java/AccountData.txt";
+	public static final String logFile = "/Users/anthony/Documents/Projects/ATM-Machine-Java/TransactionLog.txt";
+	private static final Logger logger = Logger.getLogger("Transaction History");
+	public static HashMap<Integer, Account> data = new HashMap<Integer, Account>();
+	public Scanner input = new Scanner(System.in);
+	public DecimalFormat moneyFormat = new DecimalFormat("'$'###,##0.00");
+	public Date date = new Date();
 	private int customerNumber;
 	private int pinNumber;
 	private double checkingBalance = 0;
 	private double savingBalance = 0;
-	private ArrayList<String> transactionHistory;
-
-	Scanner input = new Scanner(System.in);
-	DecimalFormat moneyFormat = new DecimalFormat("'$'###,##0.00");
-
 
 /// CONSTRUCTORS ///
 
@@ -34,23 +34,20 @@ public class Account extends ATM {
 		this.pinNumber = pinNumber;
 		this.checkingBalance = checkingBalance;
 		this.savingBalance = savingBalance;
-		this.transactionHistory = new ArrayList<>();
 	}
 
 /// GETTERS AND SETTERS ///
 
-	public int setCustomerNumber(int customerNumber) {
+	public void setCustomerNumber(int customerNumber) {
 		this.customerNumber = customerNumber;
-		return customerNumber;
 	}
 
 	public int getCustomerNumber() {
 		return customerNumber;
 	}
 
-	public int setPinNumber(int pinNumber) {
+	public void setPinNumber(int pinNumber) {
 		this.pinNumber = pinNumber;
-		return pinNumber;
 	}
 
 	public int getPinNumber() {
@@ -65,15 +62,9 @@ public class Account extends ATM {
 		return savingBalance;
 	}
 
-	public ArrayList<String> getTransactionHistory() {
-		return transactionHistory;
-	}
 
 /// METHODS ///
 
-	public void addTransactionToHistory(String transaction) {
-		transactionHistory.add(transaction);
-	}
 
 	public double calcCheckingWithdraw(double amount) {
 		checkingBalance = (checkingBalance - amount);
@@ -115,7 +106,7 @@ public class Account extends ATM {
 				if ((checkingBalance - amount) >= 0 && amount >= 0) {
 					calcCheckingWithdraw(amount);
 					System.out.println("\nCurrent Checking Account Balance: " + moneyFormat.format(checkingBalance));
-					logTransaction("Withdrew $" + amount + " from Checking account for customer number: " + customerNumber);
+					logger.log(Level.INFO, "WITHDREW " + amount + " from CHECKING account for customer number: " + customerNumber + " on " + date);
 					end = true;
 				} else {
 					System.out.println("\nBalance Cannot be Negative.");
@@ -127,7 +118,7 @@ public class Account extends ATM {
 		}
 	}
 
-	public void getsavingWithdrawInput() {
+	public void getSavingWithdrawInput() {
 		boolean end = false;
 		while (!end) {
 			try {
@@ -137,7 +128,7 @@ public class Account extends ATM {
 				if ((savingBalance - amount) >= 0 && amount >= 0) {
 					calcSavingWithdraw(amount);
 					System.out.println("\nCurrent Savings Account Balance: " + moneyFormat.format(savingBalance));
-					logTransaction("Withdrew $" + amount + " from Savings account for customer number: " + customerNumber);
+					logger.log(Level.INFO, "WITHDREW " + amount + " from SAVINGS account for customer number: " + customerNumber + " on " + date);
 					end = true;
 				} else {
 					System.out.println("\nBalance Cannot Be Negative.");
@@ -159,7 +150,7 @@ public class Account extends ATM {
 				if ((checkingBalance + amount) >= 0 && amount >= 0) {
 					calcCheckingDeposit(amount);
 					System.out.println("\nCurrent Checking Account Balance: " + moneyFormat.format(checkingBalance));
-					logTransaction("Deposited $" + amount + " into Checking account for customer number: " + customerNumber);
+					logger.log(Level.INFO, "DEPOSITED " + amount + " into CHECKING account for customer number: " + customerNumber + " on " + date);
 					end = true;
 				} else {
 					System.out.println("\nBalance Cannot Be Negative.");
@@ -182,7 +173,7 @@ public class Account extends ATM {
 				if ((savingBalance + amount) >= 0 && amount >= 0) {
 					calcSavingDeposit(amount);
 					System.out.println("\nCurrent Savings Account Balance: " + moneyFormat.format(savingBalance));
-					logTransaction("Deposited $" + amount + " into Savings account for customer number: " + customerNumber);
+					logger.log(Level.INFO, "DEPOSITED " + amount + " into SAVINGS account for customer number: " + customerNumber + " on " + date);
 					end = true;
 				} else {
 					System.out.println("\nBalance Cannot Be Negative.");
@@ -214,7 +205,7 @@ public class Account extends ATM {
 							System.out.println("\nCurrent Savings Account Balance: " + moneyFormat.format(savingBalance));
 							System.out.println(
 									"\nCurrent Checking Account Balance: " + moneyFormat.format(checkingBalance));
-							logTransaction("Transferred $" + amount + " from Checking account into Savings account for customer number: " + customerNumber);
+							logger.log(Level.INFO, "TRANSFERRED " + amount + " into SAVINGS account for customer number: " + customerNumber + " on " + date);
 							end = true;
 						} else {
 							System.out.println("\nBalance Cannot Be Negative.");
@@ -241,7 +232,7 @@ public class Account extends ATM {
 							calcSavingTransfer(amount);
 							System.out.println("\nCurrent checking account balance: " + moneyFormat.format(checkingBalance));
 							System.out.println("\nCurrent savings account balance: " + moneyFormat.format(savingBalance));
-							logTransaction("Transferred $" + amount + " from Savings account into Checking account for customer number: " + customerNumber);
+							logger.log(Level.INFO, "TRANSFERRED " + amount + " into CHECKING account for customer number: " + customerNumber + " on " + date);
 							end = true;
 						} else {
 							System.out.println("\nBalance Cannot Be Negative.");
@@ -260,4 +251,55 @@ public class Account extends ATM {
 			}
 		}
 	}
+
+	public void loadAccounts() {
+		File file = new File(dataFile);
+		if (file.exists() && file.isFile() && file.length() > 0) {
+			try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+				String line;
+				while ((line = reader.readLine()) != null) {
+					String[] fileData = line.split(",");
+					int customerNumber = Integer.parseInt(fileData[0]);
+					int pinNumber = Integer.parseInt(fileData[1]);
+					double checkingBalance = Double.parseDouble(fileData[2]);
+					double savingBalance = Double.parseDouble(fileData[3]);
+					Account acc = new Account(customerNumber, pinNumber);
+					acc.calcCheckingDeposit(checkingBalance);
+					acc.calcSavingDeposit(savingBalance);
+					data.put(customerNumber, acc);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else {
+			System.err.println("Data file not found: " + dataFile);
+		}
+	}
+
+	public void saveAccounts() {
+		try (BufferedWriter writer = new BufferedWriter(new FileWriter(dataFile))) {
+			for (Account acc : data.values()) {
+				String line = acc.getCustomerNumber() + "," + acc.getPinNumber() + "," +
+						acc.getCheckingBalance() + "," + acc.getSavingBalance();
+				writer.write(line);
+				writer.newLine();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+//	File handler setup for my logger.
+	 {
+		try {
+			FileHandler fileHandler = new FileHandler(logFile, true);
+			logger.addHandler(fileHandler);
+			SimpleFormatter formatter = new SimpleFormatter();
+			fileHandler.setFormatter(formatter);
+			logger.setLevel(Level.INFO);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 }

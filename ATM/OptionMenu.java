@@ -9,10 +9,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Scanner;
 
-public class OptionMenu extends ATM {
+public class OptionMenu {
 	Scanner menuInput = new Scanner(System.in);
 	DecimalFormat moneyFormat = new DecimalFormat("'$'###,##0.00");
-	//HashMap<Integer, Account> data = new HashMap<Integer, Account>();
+	Account account = new Account();
+
 
 /// METHODS ///
 
@@ -26,11 +27,11 @@ public class OptionMenu extends ATM {
 				customerNumber = menuInput.nextInt();
 				System.out.print("\nEnter your PIN number: ");
 				pinNumber = menuInput.nextInt();
-				Iterator it = data.entrySet().iterator();
+				Iterator it = account.data.entrySet().iterator();
 				while (it.hasNext()) {
 					Map.Entry pair = (Map.Entry) it.next();
 					Account acc = (Account) pair.getValue();
-					if (data.containsKey(customerNumber) && pinNumber == acc.getPinNumber()) {
+					if (account.data.containsKey(customerNumber) && pinNumber == acc.getPinNumber()) {
 						getAccountType(acc);
 						end = true;
 						break;
@@ -54,7 +55,8 @@ public class OptionMenu extends ATM {
 				System.out.println(" Type 1 - Checking Account");
 				System.out.println(" Type 2 - Savings Account");
 				System.out.println(" Type 3 - View Account Balances");
-				System.out.println(" Type 4 - Exit");
+				System.out.println(" Type 4 - View Transaction History");
+				System.out.println(" Type 5 - Exit");
 				System.out.print("\nChoice: ");
 
 				int selection = menuInput.nextInt();
@@ -70,7 +72,9 @@ public class OptionMenu extends ATM {
 					getAccountBalances(acc);
 					break;
 				case 4:
-					end = true;
+					break;
+				case 5:
+					exitATM();
 					break;
 				default:
 					System.out.println("\nInvalid Choice.");
@@ -139,7 +143,7 @@ public class OptionMenu extends ATM {
 					System.out.println("\nSavings Account Balance: " + moneyFormat.format(acc.getSavingBalance()));
 					break;
 				case 2:
-					acc.getsavingWithdrawInput();
+					acc.getSavingWithdrawInput();
 					break;
 				case 3:
 					acc.getSavingDepositInput();
@@ -178,14 +182,13 @@ public class OptionMenu extends ATM {
 			try {
 				System.out.println("\nEnter your customer number ");
 				cst_no = menuInput.nextInt();
-
-				if (data.isEmpty()) {
+				if (account.data.isEmpty()) {
 					end = true;
 				} else {
-					Iterator it = data.entrySet().iterator();
+					Iterator it = account.data.entrySet().iterator();
 					while (it.hasNext()) {
 						Map.Entry pair = (Map.Entry) it.next();
-						if (!data.containsKey(cst_no)) {
+						if (!account.data.containsKey(cst_no)) {
 							end = true;
 						}
 					}
@@ -194,32 +197,26 @@ public class OptionMenu extends ATM {
 						mainMenu();
 					}
 				}
-				} catch(InputMismatchException e){
-					System.out.println("\nInvalid Choice.");
-					menuInput.next();
-				}
+			} catch(InputMismatchException e){
+				System.out.println("\nInvalid Choice.");
+				menuInput.next();
+			}
 		}
 		System.out.println("\nEnter PIN to be registered");
 		int pin = menuInput.nextInt();
-		data.put(cst_no, new Account(cst_no, pin));
-		System.out.println("\nYour new account has been successfuly registered!");
+		account.data.put(cst_no, new Account(cst_no, pin));
+		System.out.println("\nYour new account has been successfully registered!");
 		System.out.println("\nRedirecting to login.............");
 		getLogin();
 	}
 
 	public void mainMenu() throws IOException {
-		File file = new File(dataFile);
-		if (file.exists() && file.length() > 0) {
-			loadAccounts();
-		}
-		//data.put(952141, new Account(952141, 191904, 1000, 5000));
-		//data.put(123, new Account(123, 123, 20000, 50000));
-
 		boolean end = false;
 		while (!end) {
 			try {
 				System.out.println("\n Type 1 - Login");
 				System.out.println(" Type 2 - Create Account");
+				System.out.println(" Type 3 - Exit");
 				System.out.print("\nChoice: ");
 				int choice = menuInput.nextInt();
 				switch (choice) {
@@ -231,6 +228,9 @@ public class OptionMenu extends ATM {
 					createAccount();
 					end = true;
 					break;
+				case 3:
+					exitATM();
+					break;
 				default:
 					System.out.println("\nInvalid Choice.");
 				}
@@ -239,9 +239,12 @@ public class OptionMenu extends ATM {
 				menuInput.next();
 			}
 		}
-		System.out.println("\nThank You for using this ATM.\n");
+	}
+
+	public void exitATM() {
+		account.saveAccounts();
+		System.out.println("\n\nThank you for using Anthony's ATM! Have a great day!\n\n");
 		menuInput.close();
-		saveAccounts();
 		System.exit(0);
 	}
 }
